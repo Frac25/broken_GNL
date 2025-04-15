@@ -1,5 +1,5 @@
 #ifndef BUFFER_SIZE
-# define BUFFER_SIZE 3
+# define BUFFER_SIZE 5
 #endif
 
 #include<stdio.h>
@@ -8,6 +8,7 @@
 #include<string.h>
 #include <fcntl.h>
 
+//cc broken_gnl.c -Wall -Wextra -Werror -D BUFFER_SIZE=3 -o gnl
 
 
 int ft_strlen(char *c)
@@ -67,58 +68,69 @@ char *ft_memmove(char *dest, char *src, int n)
 	return(dest);
 }
 
-int ft_join(char *s1, char *s2, int n)
+char *ft_join(char *s1, char *s2, int n)
 {
-
-	printf("s1 = %s\n", s1);
-	printf("s2 = %s\n", s2);
-
 	char *retj = NULL;
 	int size1 = ft_strlen(s1);
-	printf("size1 = %d\n", size1);
-	int size2 = ft_strlen(s2);
-	printf("size2 = %d\n", size2);
 
-	retj = malloc (sizeof(char) * (size1 + size2 + 1));
+	retj = malloc (sizeof(char) * (size1 + n + 1));
 	if(!retj)
 	{
-		return (-1);
+		free(s1);
+		return (NULL);
 	}
 	ft_memmove(retj, s1, size1);
-	ft_memmove(retj + size1, s2, size2);
-	retj[size1 + size2 + 1] = 0;
-
-	printf("retj = %s\n", retj);
-
-
-	return(0);
+	ft_memmove(retj + size1, s2, n);
+	retj[size1 + n] = 0;
+	free(s1);
+	s1 = NULL;
+	return(retj);
 }
 
 char *buffer(fd)
 {
 	static char buf[BUFFER_SIZE + 1];
-	char *ret = NULL;
 	char *tmp = NULL;
+	char *rest = NULL;
 	int nb_read = 0;
 
-	nb_read = read(fd , buf, BUFFER_SIZE);
-	if(nb_read < 0)
-		return(NULL);
-	buf[nb_read] = '\0';
-	if(nb_read == 0)
-	{
-		printf("nb_read = 0");
-	}
-	else
-	{
-		tmp = ft_strchr(buf, '\n');
-		tmp = buf;
-		printf("tmp = %s\n", tmp);
-		printf("buffer = %s\n", buf);
-		ft_join(buf, tmp, 0);
+//	printf("buffer_size  = %d\n", BUFFER_SIZE);
 
+	while(rest == 0)
+	{
+		if(buf[0] == '\0')
+		{
+			nb_read = read(fd , buf, BUFFER_SIZE);
+			if(nb_read < 0)
+			{
+				free(tmp);
+				return(NULL);
+			}
+			buf[nb_read] = '\0';
+		}
+		rest = ft_strchr(buf, '\n');
+		if(rest)
+		{
+			int l_deb;
+			l_deb = rest - buf;
+			tmp = ft_join(tmp, buf, l_deb + 1);
+
+			int j = 0;
+			while(buf[j + l_deb + 1])
+			{
+				buf[j] = buf[j + l_deb + 1];
+				j++;
+			}
+			buf[j] = '\0';
+			return(tmp);
+		}
+		else
+		{
+			tmp = ft_join(tmp, buf, ft_strlen(buf));
+			buf[0] = '\0';
+		}
 	}
-	return(ret);
+	return(tmp);
 }
 
 int main(void)
@@ -128,8 +140,16 @@ int main(void)
 	fd = open("text1.txt", O_RDONLY);
 	if(fd < 0)
 		perror("open");
-	buffer(fd);
+
+	printf("line = %s", buffer(fd));
+	printf("line = %s", buffer(fd));
+	printf("line = %s", buffer(fd));
+	printf("line = %s", buffer(fd));
+	printf("line = %s", buffer(fd));
+	printf("line = %s", buffer(fd));
+	printf("line = %s", buffer(fd));
 
 
 	return(0);
 }
+
